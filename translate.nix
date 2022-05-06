@@ -59,29 +59,17 @@
   translateIndex = fetchedIndex:
     l.mapAttrs
     (
-      name: versions: let
-        # extend the versions with the dream-lock
-        computedVersions =
-          l.mapAttrs
-          (
-            version: sourceInfo: let
-              tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
-            in {
-              inherit tree;
-              lock = translate {inherit name version sourceInfo tree;};
-            }
-          )
-          versions;
-        # filter out versions that don't have Cargo.lock file
-        # since they can't be translated
-        versionsWithLock =
-          l.filterAttrs
-          (_: attrs: attrs.tree.files ? "Cargo.lock")
-          computedVersions;
-        # remove the source tree
-        usableVersions = l.mapAttrs (_: attrs: attrs.lock) versionsWithLock;
-      in
-        usableVersions
+      name: versions:
+        l.mapAttrs
+        (
+          version: sourceInfo: let
+            tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
+          in
+            if tree.files ? "Cargo.lock"
+            then translate {inherit name version sourceInfo tree;}
+            else l.warn "'${name}-${version}' does not have a Cargo.lock. It's dream-lock will be empty." {}
+        )
+        versions
     )
     fetchedIndex;
 in {inherit translate translateIndex;}
