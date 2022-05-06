@@ -1,11 +1,13 @@
 {
   lib,
   writeScript,
+  parallel,
+  # ilib
   system,
   subsystem,
   fetcherName,
   translatorName,
-  parallel,
+  genDirectory ? "gen/",
   ...
 }: let
   l = lib // builtins;
@@ -30,7 +32,11 @@
       l.toFile
       "translate-${pkg.name}-${pkg.version}"
       (mkTranslateExpr pkg);
-  in ''nix eval --impure --json --file ${expr}'';
+    dirPath = "${genDirectory}locks/${pkg.name}/${pkg.version}";
+  in ''
+    mkdir -p ${dirPath}
+    nix eval --impure --json --file ${expr} > ${dirPath}/dream-lock.json
+  '';
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
