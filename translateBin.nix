@@ -35,7 +35,6 @@
       (mkTranslateExpr pkg);
     dirPath = "${genDirectory}locks/${pkg.name}/${pkg.version}";
     command = ''
-      #!${stdenv.shell}
       mkdir -p ${dirPath}
       nix eval --impure --json --file ${expr} > ${dirPath}/dream-lock.json
     '';
@@ -44,7 +43,8 @@
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
-    commands = l.map mkTranslateCommand pkgs;
+    invocations = l.map mkTranslateCommand pkgs;
+    commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
     script = ''${parallel}/bin/parallel -- ${l.concatStringsSep " " commands}'';
   in
     writeScript "translate.sh" script
