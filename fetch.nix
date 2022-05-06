@@ -24,7 +24,7 @@
     hash = attrs.hash or (outputs.calcHash "sha256");
     source = outputs.fetched hash;
   in
-    (l.removeAttrs ["name" "version" attrs]) // {inherit source hash;};
+    (l.removeAttrs attrs ["name" "version"]) // {inherit source hash;};
 
   # fetches an index.
   fetchIndex = index:

@@ -48,7 +48,7 @@
       l.updateManyAttrsByPath [
         {
           path = ["sources" name version];
-          update = _: {type = fetcherName;} // (l.removeAttrs ["source"] sourceInfo);
+          update = _: {type = fetcherName;} // (l.removeAttrs sourceInfo ["source"]);
         }
       ]
       dreamLock;
