@@ -20,11 +20,17 @@
     sourceInfo,
   }: let
     tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
+
     discoveredProjects = dlib.discoverProjects {inherit tree;};
+    # get the first project, there should only be one anyways
+    project = l.elemAt discoveredProjects 0;
+
+    # get the translator
+    translatorName = project.translator or (l.head project.translators);
+    translator = d2n.translators.translators.${project.subsystem}.all.${translatorName};
+
     dreamLock' = translator.translate {
-      inherit tree discoveredProjects;
-      # get the first project, there should only be one anyways
-      project = l.elemAt discoveredProjects 0;
+      inherit tree discoveredProjects project;
     };
     # simpleTranslate2 uses .result
     dreamLock = dreamLock'.result or dreamLock';
