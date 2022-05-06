@@ -2,6 +2,7 @@
   lib,
   writeScript,
   parallel,
+  stdenv,
   # ilib
   system,
   subsystem,
@@ -30,19 +31,20 @@
   mkTranslateCommand = pkg: let
     expr =
       l.toFile
-      "translate-${pkg.name}-${pkg.version}"
+      "translate-${pkg.name}-${pkg.version}.nix"
       (mkTranslateExpr pkg);
     dirPath = "${genDirectory}locks/${pkg.name}/${pkg.version}";
-  in ''
-    mkdir -p ${dirPath}
-    nix eval --impure --json --file ${expr} > ${dirPath}/dream-lock.json
-  '';
+    command = ''
+      #!${stdenv.shell}
+      mkdir -p ${dirPath}
+      nix eval --impure --json --file ${expr} > ${dirPath}/dream-lock.json
+    '';
+  in
+    l.toFile "translate-${pkg.name}-${pkg.version}.sh" command;
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
-    commandsRaw = l.map mkTranslateCommand pkgs;
-    commandsQuoted = l.map (cmd: "\"${cmd}\"") commandsRaw;
-    commands = l.concatStringsSep " " commandsQuoted;
-    script = ''${parallel}/bin/parallel -- ${commands}'';
+    commands = l.map mkTranslateCommand pkgs;
+    script = ''${parallel}/bin/parallel -- ${l.concatStringsSep " " commands}'';
   in
     writeScript "translate.sh" script
