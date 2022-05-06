@@ -62,12 +62,8 @@
       name: versions:
         l.mapAttrs
         (
-          version: sourceInfo: let
-            tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
-          in
-            if tree.files ? "Cargo.lock"
-            then translate {inherit name version sourceInfo tree;}
-            else l.warn "'${name}-${version}' does not have a Cargo.lock. It's dream-lock will be null." null
+          version: sourceInfo:
+            translate {inherit name version sourceInfo;}
         )
         versions
     )
