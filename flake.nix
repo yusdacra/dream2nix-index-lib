@@ -36,8 +36,9 @@
         # pkg: {name, version, ?hash, ...}
         # extra attrs aren't removed
         dreamLockFor = pkg: let
-          srcInfo = fetcher.fetch pkg;
-          pkgWithSrc = pkg // srcInfo;
+          sourceInfo = fetcher.fetch pkg;
+          pkgWithSrc =
+            (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
           dreamLock = translator.translate pkgWithSrc;
         in
           dreamLock;
