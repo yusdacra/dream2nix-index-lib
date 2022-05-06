@@ -26,14 +26,12 @@
     # craft the project
     project = dlib.construct.discoveredProject {
       inherit subsystem name;
-      translator = translatorName;
       translators = [translatorName];
       relPath = "";
       subsystemInfo = {};
     };
 
     # get the translator
-    translatorName = project.translator or (l.head project.translators);
     translator = d2n.translators.translators.${project.subsystem}.all.${translatorName};
 
     # translate the project
