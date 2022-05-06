@@ -67,7 +67,7 @@
           in
             if tree.files ? "Cargo.lock"
             then translate {inherit name version sourceInfo tree;}
-            else l.warn "'${name}-${version}' does not have a Cargo.lock. It's dream-lock will be empty." {}
+            else l.warn "'${name}-${version}' does not have a Cargo.lock. It's dream-lock will be null." null
         )
         versions
     )
