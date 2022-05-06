@@ -38,7 +38,8 @@
 
     # translate the project
     dreamLock' = translator.translate {
-      inherit tree discoveredProjects project;
+      inherit tree project;
+      discoveredProjects = [project];
     };
     # simpleTranslate2 uses .result
     dreamLock = dreamLock'.result or dreamLock';
