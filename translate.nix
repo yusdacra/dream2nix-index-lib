@@ -2,7 +2,9 @@
   dream2nix,
   system,
   lib,
-  indexName,
+  subsystem,
+  translatorName,
+  fetcherName,
   ...
 }: let
   l = lib // builtins;
@@ -18,29 +20,34 @@
     version,
     # this must contain `source` at least
     sourceInfo,
+    # imported source tree
+    tree ? dlib.prepareSourceTree {inherit (sourceInfo) source;},
   }: let
-    tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
-
-    discoveredProjects = dlib.discoverProjects {inherit tree;};
-    # get the first project, there should only be one anyways
-    project = l.elemAt discoveredProjects 0;
+    # craft the project
+    project = dlib.construct.discoveredProject {
+      inherit subsystem name;
+      translator = translatorName;
+      translators = [translatorName];
+      relPath = "";
+      subsystemInfo = {};
+    };
 
     # get the translator
     translatorName = project.translator or (l.head project.translators);
     translator = d2n.translators.translators.${project.subsystem}.all.${translatorName};
 
+    # translate the project
     dreamLock' = translator.translate {
       inherit tree discoveredProjects project;
     };
     # simpleTranslate2 uses .result
     dreamLock = dreamLock'.result or dreamLock';
-    # patch this package's dependency to use crates-io source
-    # and not a path source.
+    # patch this package's dependency to not use path source.
     dreamLockPatched =
       l.updateManyAttrsByPath [
         {
           path = ["sources" name version];
-          update = _: {type = indexName;} // (l.removeAttrs ["source"] sourceInfo);
+          update = _: {type = fetcherName;} // (l.removeAttrs ["source"] sourceInfo);
         }
       ]
       dreamLock;
@@ -53,13 +60,29 @@
   translateIndex = fetchedIndex:
     l.mapAttrs
     (
-      name: versions:
-        l.mapAttrs
-        (
-          version: sourceInfo:
-            translate {inherit name version sourceInfo;}
-        )
-        versions
+      name: versions: let
+        # extend the versions with the dream-lock
+        computedVersions =
+          l.mapAttrs
+          (
+            version: sourceInfo: let
+              tree = dlib.prepareSourceTree {inherit (sourceInfo) source;};
+            in {
+              inherit tree;
+              lock = translate {inherit name version sourceInfo tree;};
+            }
+          )
+          versions;
+        # filter out versions that don't have Cargo.lock file
+        # since they can't be translated
+        versionsWithLock =
+          l.filterAttrs
+          (_: attrs: attrs.tree.files ? "Cargo.lock")
+          computedVersions;
+        # remove the source tree
+        usableVersions = l.mapAttrs (_: attrs: attrs.lock) versionsWithLock;
+      in
+        usableVersions
     )
     fetchedIndex;
 in {inherit translate translateIndex;}

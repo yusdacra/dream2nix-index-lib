@@ -13,30 +13,33 @@
 
     systems = ["x86_64-linux"];
 
-    mkLib = {
-      system,
-      indexName,
-    }: let
+    # system: the (host) system to use (example: "x86_64-linux")
+    # subsystem: the dream2nix subsystem name (example: "rust")
+    # translatorName: the name of the dream2nix translator to use (example: "cargo-lock")
+    # fetcherName: the name of the dream2nix fetcher to use (example: "crates-io")
+    mkLib = {system, ...} @ attrs: let
       pkgs = nixpkgs.legacyPackages.${system};
 
       callPackage = f: args:
-        pkgs.callPackage f (args // {inherit dream2nix system indexName;});
+        pkgs.callPackage f (args // attrs // {inherit dream2nix;});
 
       fetcher = callPackage ./fetch.nix {};
       translator = callPackage ./translate.nix {};
+      flattenIndex = callPackage ./flattenIndex.nix {};
     in
       fetcher
       // translator
       // {
-        inherit callPackage;
-        # pkg: {name, version, hash}
+        inherit callPackage flattenIndex;
+
+        # pkg: {name, version, ?hash, ...}
+        # extra attrs aren't removed
         dreamLockFor = pkg: let
           srcInfo = fetcher.fetch pkg;
           pkgWithSrc = pkg // srcInfo;
           dreamLock = translator.translate pkgWithSrc;
         in
           dreamLock;
-        flattenIndex = callPackage ./flattenIndex.nix {};
       };
   in {
     lib = {inherit mkLib;};

@@ -2,12 +2,12 @@
   dream2nix,
   lib,
   system,
-  indexName,
+  fetcherName,
   ...
 }: let
   l = lib // builtins;
 
-  fetchOutputs = dream2nix.lib.${system}.fetchers.fetchers.${indexName}.outputs;
+  fetchOutputs = dream2nix.lib.${system}.fetchers.fetchers.${fetcherName}.outputs;
 
   # fetch one package.
   fetch = {
