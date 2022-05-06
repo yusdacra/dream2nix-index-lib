@@ -41,7 +41,7 @@ in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
     commandsRaw = l.map mkTranslateCommand pkgs;
-    commandsQuoted = l.map (cmd: "\"${cmd}\"") commands;
+    commandsQuoted = l.map (cmd: "\"${cmd}\"") commandsRaw;
     commands = l.concatStringsSep " " commandsQuoted;
     script = ''${parallel}/bin/parallel -- ${commands}'';
   in
