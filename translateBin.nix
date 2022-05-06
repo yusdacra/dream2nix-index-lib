@@ -22,11 +22,17 @@
         translatorName
         ;
     };
+    attrsFile = l.toFile "attrs.json" (l.toJSON attrs);
+    pkgFile = l.toFile "args.json" (l.toJSON pkg);
   in ''
+    let
+      b = builtins;
+      readJSON = path: b.fromJSON (b.readFile path);
+    in
     (
       (builtins.getFlake (toString ${./.})).lib.mkLib
-      (builtins.fromJSON "${l.toJSON attrs}")
-    ).dreamLockFor (builtins.fromJSON "${l.toJSON pkg}")
+      (readJSON ${attrsFile})
+    ).dreamLockFor (readJSON ${pkgFile})
   '';
   mkTranslateCommand = pkg: let
     expr =
