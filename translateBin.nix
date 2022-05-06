@@ -1,7 +1,7 @@
 {
   lib,
   writeScript,
-  parallel,
+  moreutils,
   stdenv,
   # ilib
   system,
@@ -45,6 +45,6 @@ in
   pkgs: let
     invocations = l.map mkTranslateCommand pkgs;
     commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
-    script = ''${parallel}/bin/parallel -- ${l.concatStringsSep " " commands}'';
+    script = ''${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}'';
   in
     writeScript "translate.sh" script
