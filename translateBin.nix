@@ -5,6 +5,7 @@
   subsystem,
   fetcherName,
   translatorName,
+  parallel,
   ...
 }: let
   l = lib // builtins;
@@ -29,11 +30,13 @@
       l.toFile
       "translate-${pkg.name}-${pkg.version}"
       (mkTranslateExpr pkg);
-  in ''nix eval --impure --json --file "${expr}"'';
+  in ''nix eval --impure --json --file ${expr}'';
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
-    commands = l.map mkTranslateCommand pkgs;
-    script = l.concatStringsSep "\n" commands;
+    commandsRaw = l.map mkTranslateCommand pkgs;
+    commandsQuoted = l.map (cmd: "\"${cmd}\"") commands;
+    commands = l.concatStringsSep " " commandsQuoted;
+    script = ''${parallel}/bin/parallel -- ${commands}'';
   in
     writeScript "translate.sh" script
