@@ -26,11 +26,12 @@
       fetcher = callPackage ./fetch.nix {};
       translator = callPackage ./translate.nix {};
       flattenIndex = callPackage ./flattenIndex.nix {};
+      translateBin = callPackage ./translateBin.nix {};
     in
       fetcher
       // translator
       // {
-        inherit callPackage flattenIndex;
+        inherit callPackage flattenIndex translateBin;
 
         # pkg: {name, version, ?hash, ...}
         # extra attrs aren't removed
