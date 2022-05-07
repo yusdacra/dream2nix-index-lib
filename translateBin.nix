@@ -2,16 +2,14 @@
   lib,
   writeScript,
   moreutils,
-  python3,
   stdenv,
+  jq,
   # ilib
   system,
   subsystem,
   fetcherName,
   translatorName,
   genDirectory ? "gen/",
-  # flake inputs
-  dream2nix,
   ...
 }: let
   l = lib // builtins;
@@ -47,8 +45,7 @@
       lock="$(nix eval --impure --json --file ${expr})"
       if [ $? -eq 0 ]; then
         mkdir -p ${dirPath}
-        echo "$lock" | $pyexe ${dream2nix}/src/apps/cli/format-dream-lock.py \
-          > ${dirPath}/dream-lock.json
+        echo "$lock" | $jqexe . > ${dirPath}/dream-lock.json
       fi
     '';
   in
@@ -59,7 +56,7 @@ in
     invocations = l.map mkTranslateCommand pkgs;
     commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
     script = ''
-      pyexe=${python3}/bin/python3
+      jqexe=${jq}/bin/jq
       ${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}
     '';
   in
