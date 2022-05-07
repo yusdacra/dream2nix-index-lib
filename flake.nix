@@ -27,7 +27,7 @@
       translator = callPackage ./translate.nix {};
       flattenIndex = callPackage ./flattenIndex.nix {};
       translateBin = callPackage ./translateBin.nix {};
-      mkIndexOutputs = callPackage ./mkIndexOutputs.nix {};
+      mkLocksOutputs = callPackage ./mkLocksOutputs.nix {};
 
       # pkg: {name, version, ?hash, ...}
       # extra attrs aren't removed
@@ -46,7 +46,7 @@
           callPackage
           flattenIndex
           translateBin
-          mkIndexOutputs
+          mkLocksOutputs
           dreamLockFor
           ;
       };
