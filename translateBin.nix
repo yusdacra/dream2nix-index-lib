@@ -14,7 +14,10 @@
 }: let
   l = lib // builtins;
 
-  mkTranslateExpr = pkg: let
+  mkTranslateExpr = {
+    pkg,
+    dirPath,
+  }: let
     attrs = {
       inherit
         system
@@ -23,33 +26,73 @@
         translatorForPath
         ;
     };
+
     attrsFile = l.toFile "attrs.json" (l.toJSON attrs);
     pkgFile = l.toFile "args.json" (l.toJSON pkg);
+
+    systemAttr = "$" + "{config.system}";
+    subsystemAttr = "$" + "{config.subsystem}";
+    translatorAttr = "$" + "{translatorName}";
   in ''
     let
-      b = builtins;
-      readJSON = path: b.fromJSON (b.readFile path);
-    in
-    (
-      (builtins.getFlake (toString ${./.})).lib.mkLib
-      (readJSON ${attrsFile})
-    ).dreamLockFor (readJSON ${pkgFile})
+      ilibFlake = builtins.getFlake (toString ${./.});
+
+      l = ilibFlake.inputs.nixpkgs.lib // builtins;
+      readJSON = path: l.fromJSON (l.readFile path);
+
+      config = readJSON ${attrsFile};
+      ilib = ilibFlake.lib.mkLib config;
+      d2n = ilibFlake.inputs.dream2nix.lib;
+      translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
+
+      pkg = readJSON ${pkgFile};
+      sourceInfo = ilib.fetch pkg;
+      tree = d2n.dlib.prepareSourceTree {inherit (sourceInfo) source;};
+      pkgWithSrc =
+        (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
+      translatorName = determineTranslator {inherit tree;};
+
+      lock = with ilib;
+        if translators.pure ? translatorName
+        then translate (pkgWithSrc // {inherit tree;})
+        else {
+          script = translators.impure.${translatorAttr}.translateBin;
+          args =
+            l.toFile
+            "translator-args.json"
+            (
+              l.toJSON
+              ((makeTranslatorArguments {
+                inherit sourceInfo translatorName;
+                inherit (pkg) name;
+              }) // {outputFile = "${dirPath}/dream-lock.json";})
+            );
+        };
+    in l.toFile "lock.json" (l.toJSON lock)
   '';
   mkTranslateCommand = pkg: let
+    inherit (pkg) name version;
+
+    dirPath = "${genDirectory}locks/${name}/${version}";
     expr =
       l.toFile
-      "translate-${pkg.name}-${pkg.version}.nix"
-      (mkTranslateExpr pkg);
-    dirPath = "${genDirectory}locks/${pkg.name}/${pkg.version}";
+      "translate-${name}-${version}.nix"
+      (mkTranslateExpr {inherit pkg dirPath;});
     command = ''
-      lock="$(nix eval --impure --json --file ${expr})"
+      lock="$(nix eval --impure --raw --file ${expr})"
       if [ $? -eq 0 ]; then
         mkdir -p ${dirPath}
-        echo "$lock" | $jqexe . > ${dirPath}/dream-lock.json
+        script="$($jqexe .script -c -r $lock)"
+        if [[ "$script" == "null" ]]; then
+          cat $lock | $jqexe . > ${dirPath}/dream-lock.json
+        else
+          args="$($jqexe .args -c -r $lock)"
+          $script $args
+        fi
       fi
     '';
   in
-    l.toFile "translate-${pkg.name}-${pkg.version}.sh" command;
+    l.toFile "translate-${name}-${version}.sh" command;
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let

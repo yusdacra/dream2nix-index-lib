@@ -12,6 +12,44 @@
   d2n = dream2nix.lib.${system};
   dlib = dream2nix.lib.dlib;
 
+  determineTranslator = {tree}: let
+    # determine translator
+    translatorNames = l.attrValues (
+      l.filterAttrs
+      # TODO: replace this with an actual 'containsPath' function
+      (path: _: (l.tryEval (tree.getNodeFromPath path)).success)
+      translatorForPath
+    );
+    translatorName =
+      if l.length translatorNames == 0
+      then
+        translatorForPath.__default
+        or (throw "could not determine translator for source '${tree.fullPath}'")
+      else l.head translatorNames;
+  in
+    translatorName;
+
+  mkTranslatorArguments = {
+    name,
+    sourceInfo,
+    translatorName,
+    tree ? null,
+  }: let
+    # craft the project
+    project = dlib.construct.discoveredProject {
+      inherit subsystem name;
+      translators = [translatorName];
+      relPath = "";
+      subsystemInfo = {};
+    };
+  in
+    {
+      inherit project;
+      inherit (sourceInfo) source;
+      discoveredProjects = [project];
+    }
+    // l.optionalAttrs (tree != null) {inherit tree;};
+
   # translates one package and outputs it's dream-lock.
   translate = {
     # name of the package
@@ -23,36 +61,15 @@
     # imported source tree
     tree ? dlib.prepareSourceTree {inherit (sourceInfo) source;},
   }: let
-    # determine translator
-    translatorNames = l.attrValues (
-      l.filterAttrs
-      (path: _: (l.tryEval (tree.getNodeFromPath path)).success)
-      translatorForPath
-    );
-    translatorName =
-      if l.length translatorNames == 0
-      then
-        translatorForPath.__default
-        or (throw "could not determine translator for '${name}-${version}' (source '${tree.fullPath}')")
-      else l.head translatorNames;
-
-    # craft the project
-    project = dlib.construct.discoveredProject {
-      inherit subsystem name;
-      translators = [translatorName];
-      relPath = "";
-      subsystemInfo = {};
-    };
+    translatorName = determineTranslator {inherit tree;};
 
     # get the translator
-    translator = d2n.translators.translators.${project.subsystem}.all.${translatorName};
+    translator = d2n.translators.translators.${subsystem}.all.${translatorName};
 
     # translate the project
-    dreamLock' = translator.translate {
-      inherit tree project;
-      inherit (sourceInfo) source;
-      discoveredProjects = [project];
-    };
+    dreamLock' = translator.translate (mkTranslatorArguments {
+      inherit sourceInfo name translatorName tree;
+    });
     # simpleTranslate2 uses .result
     dreamLock = dreamLock'.result or dreamLock';
     # patch this package's dependency to not use path source.
