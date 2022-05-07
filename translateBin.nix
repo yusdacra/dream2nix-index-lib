@@ -89,7 +89,7 @@
         mkdir -p ${dirPath}
         script="$($jqexe .script -c -r $lock)"
         if [[ "$script" == "null" ]]; then
-          cat $lock | $jqexe . > ${dirPath}/dream-lock.json
+          $jqexe . -r $lock > ${dirPath}/dream-lock.json
         else
           args="$($jqexe .args -c -r $lock)"
           $script $args
