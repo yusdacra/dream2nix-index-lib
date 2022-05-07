@@ -62,7 +62,7 @@
             "translator-args.json"
             (
               l.toJSON
-              ((makeTranslatorArguments {
+              ((mkTranslatorArguments {
                 inherit sourceInfo translatorName;
                 inherit (pkg) name;
               }) // {outputFile = "${dirPath}/dream-lock.json";})
