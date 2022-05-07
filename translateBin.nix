@@ -84,14 +84,14 @@
     dirPath = "${genDirectory}locks/${name}/${version}";
     expr =
       l.toFile
-      "translate-${name}-${version}.nix"
+      (l.strings.sanitizeDerivationName "translate-${name}-${version}.nix")
       (mkTranslateExpr {inherit pkg dirPath;});
     command = ''
       build="$(nix build --no-link --impure --json --file ${expr})"
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $? -eq 0 ]; then
-        mkdir -p ${dirPath}
-        outlock=${dirPath}/dream-lock.json
+        mkdir -p "${dirPath}"
+        outlock="${dirPath}/dream-lock.json"
         script="$($jqexe .script -c -r $lock)"
         if [[ "$script" == "null" ]]; then
           $jqexe . -r $lock > $outlock
@@ -102,13 +102,15 @@
             \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
             \"type\":\"$($jqexe .sourceType -c -r $args)\"\
           }"
-          $jqexe ".sources.${name}.\"${version}\" = $pkgSrc" -r $outlock \
+          $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
             | $spgexe $outlock
         fi
       fi
     '';
   in
-    l.toFile "translate-${name}-${version}.sh" command;
+    l.toFile
+    (l.strings.sanitizeDerivationName "translate-${name}-${version}.sh")
+    command;
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
