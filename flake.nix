@@ -15,8 +15,8 @@
 
     # system: the (host) system to use (example: "x86_64-linux")
     # subsystem: the dream2nix subsystem name (example: "rust")
-    # translatorName: the name of the dream2nix translator to use (example: "cargo-lock")
     # fetcherName: the name of the dream2nix fetcher to use (example: "crates-io")
+    # translatorForPath: if path exists, translator will be marked as valid
     mkLib = {system, ...} @ attrs: let
       pkgs = nixpkgs.legacyPackages.${system};
 

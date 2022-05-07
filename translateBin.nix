@@ -8,7 +8,7 @@
   system,
   subsystem,
   fetcherName,
-  translatorName,
+  translatorForPath,
   genDirectory ? "gen/",
   ...
 }: let
@@ -20,7 +20,7 @@
         system
         subsystem
         fetcherName
-        translatorName
+        translatorForPath
         ;
     };
     attrsFile = l.toFile "attrs.json" (l.toJSON attrs);
