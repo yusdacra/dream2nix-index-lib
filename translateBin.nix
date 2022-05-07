@@ -102,7 +102,7 @@
             \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
             \"type\":\"$($jqexe .sourceType -c -r $args)\"\
           }"
-          $jqexe '.sources.${name}."${version}" = $pkgSrc' -r $outlock \
+          $jqexe ".sources.${name}.\"${version}\" = $pkgSrc" -r $outlock \
             | $moreutils/bin/sponge $outlock
         fi
       fi
