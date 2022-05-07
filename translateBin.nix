@@ -56,15 +56,18 @@
         if translators.pure ? translatorName
         then translate (pkgWithSrc // {inherit tree;})
         else {
-          script = translators.impure.${translatorAttr}.translateBin;
+          script = toString translators.impure.${translatorAttr}.translateBin;
           args =
             l.toFile
             "translator-args.json"
             (
               l.toJSON
               ((mkTranslatorArguments {
-                inherit sourceInfo translatorName;
+                inherit translatorName;
                 inherit (pkg) name;
+                sourceInfo = sourceInfo // {
+                  source = toString sourceInfo.source;
+                };
               }) // {outputFile = "${dirPath}/dream-lock.json";})
             );
         };
