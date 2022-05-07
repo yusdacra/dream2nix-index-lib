@@ -84,7 +84,7 @@
       (mkTranslateExpr {inherit pkg dirPath;});
     command = ''
       build="$(nix build --impure --json --file ${expr})"
-      lock="$(echo $build | $jqexe .outputs.out -c -r)"
+      lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $? -eq 0 ]; then
         mkdir -p ${dirPath}
         script="$($jqexe .script -c -r $lock)"
