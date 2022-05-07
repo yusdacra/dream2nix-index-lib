@@ -32,7 +32,7 @@
     translatorName =
       if l.length translatorNames == 0
       then
-        translatorForFile."__default"
+        translatorForPath.__default
         or (throw "could not determine translator for '${name}-${version}' (source '${tree.fullPath}')")
       else l.head translatorNames;
 
