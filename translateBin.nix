@@ -58,9 +58,11 @@ in
       l.map
       (invocation: "\"$shexe -c 'jqexe=${jq}/bin/jq . ${invocation}'\"")
       invocations;
-    script = ''
+    script = let
+      jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
+    in ''
       shexe=${stdenv.shell}
-      ${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}
+      ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
     '';
   in
     writeScript "translate.sh" script
