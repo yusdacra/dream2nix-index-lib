@@ -68,7 +68,11 @@
                   inherit sourceInfo translatorName;
                   inherit (pkg) name;
                 })
-                // {outputFile = "${dirPath}/dream-lock.json";}
+                // {
+                  outputFile = "${dirPath}/dream-lock.json";
+                  sourceHash = sourceInfo.hash;
+                  sourceType = config.fetcherName;
+                }
               )
             );
         };
@@ -87,12 +91,19 @@
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $? -eq 0 ]; then
         mkdir -p ${dirPath}
+        outlock=${dirPath}/dream-lock.json
         script="$($jqexe .script -c -r $lock)"
         if [[ "$script" == "null" ]]; then
-          $jqexe . -r $lock > ${dirPath}/dream-lock.json
+          $jqexe . -r $lock > $outlock
         else
           args="$($jqexe .args -c -r $lock)"
           $script $args
+          pkgSrc="{\
+            \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
+            \"type\":\"$($jqexe .sourceType -c -r $args)\"\
+          }"
+          $jqexe '.sources.${name}."${version}" = $pkgSrc' -r $outlock \
+            | $moreutils/bin/sponge $outlock
         fi
       fi
     '';
@@ -110,7 +121,8 @@ in
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
     in ''
       shexe=${stdenv.shell}
-      ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
+      moreutils=${moreutils}
+      $moreutils/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
     '';
   in
     writeScript "translate.sh" script
