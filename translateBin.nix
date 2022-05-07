@@ -42,6 +42,7 @@
 
       config = readJSON ${attrsFile};
       ilib = ilibFlake.lib.mkLib config;
+      pkgs = ilibFlake.inputs.nixpkgs.legacyPackages.${systemAttr};
       d2n = ilibFlake.inputs.dream2nix.lib;
       translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
 
@@ -56,22 +57,22 @@
         if translators.pure ? translatorName
         then translate (pkgWithSrc // {inherit tree;})
         else {
-          script = toString translators.impure.${translatorAttr}.translateBin;
+          script = translators.impure.${translatorAttr}.translateBin;
           args =
-            l.toFile
+            pkgs.writeText
             "translator-args.json"
             (
               l.toJSON
-              ((mkTranslatorArguments {
-                inherit translatorName;
-                inherit (pkg) name;
-                sourceInfo = sourceInfo // {
-                  source = toString sourceInfo.source;
-                };
-              }) // {outputFile = "${dirPath}/dream-lock.json";})
+              (
+                (mkTranslatorArguments {
+                  inherit sourceInfo translatorName;
+                  inherit (pkg) name;
+                })
+                // {outputFile = "${dirPath}/dream-lock.json";}
+              )
             );
         };
-    in l.toFile "lock.json" (l.toJSON lock)
+    in pkgs.writeText "lock.json" (l.toJSON lock)
   '';
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
