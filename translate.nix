@@ -99,4 +99,11 @@
         versions
     )
     fetchedIndex;
-in {inherit translate translateIndex;}
+in {
+  inherit
+    translate
+    translateIndex
+    determineTranslator
+    mkTranslatorArguments
+    ;
+}
