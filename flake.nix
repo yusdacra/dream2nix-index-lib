@@ -27,21 +27,28 @@
       translator = callPackage ./translate.nix {};
       flattenIndex = callPackage ./flattenIndex.nix {};
       translateBin = callPackage ./translateBin.nix {};
+      mkIndexOutputs = callPackage ./mkIndexOutputs.nix {};
+
+      # pkg: {name, version, ?hash, ...}
+      # extra attrs aren't removed
+      dreamLockFor = pkg: let
+        sourceInfo = fetcher.fetch pkg;
+        pkgWithSrc =
+          (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
+        dreamLock = translator.translate pkgWithSrc;
+      in
+        dreamLock;
     in
       fetcher
       // translator
       // {
-        inherit callPackage flattenIndex translateBin;
-
-        # pkg: {name, version, ?hash, ...}
-        # extra attrs aren't removed
-        dreamLockFor = pkg: let
-          sourceInfo = fetcher.fetch pkg;
-          pkgWithSrc =
-            (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
-          dreamLock = translator.translate pkgWithSrc;
-        in
-          dreamLock;
+        inherit
+          callPackage
+          flattenIndex
+          translateBin
+          mkIndexOutputs
+          dreamLockFor
+          ;
       };
   in {
     lib = {inherit mkLib;};
