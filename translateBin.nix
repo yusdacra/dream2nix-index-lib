@@ -59,7 +59,7 @@ in
     invocations = l.map mkTranslateCommand pkgs;
     commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
     script = ''
-      pyexe=${python3}
+      pyexe=${python3}/bin/python3
       ${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}
     '';
   in
