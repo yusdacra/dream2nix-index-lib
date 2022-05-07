@@ -50,7 +50,7 @@
       tree = d2n.dlib.prepareSourceTree {inherit (sourceInfo) source;};
       pkgWithSrc =
         (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
-      translatorName = determineTranslator {inherit tree;};
+      translatorName = ilib.determineTranslator {inherit tree;};
 
       lock = with ilib;
         if translators.pure ? translatorName
