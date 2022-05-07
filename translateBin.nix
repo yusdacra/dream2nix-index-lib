@@ -2,6 +2,7 @@
   lib,
   writeScript,
   moreutils,
+  python3,
   stdenv,
   # ilib
   system,
@@ -9,6 +10,8 @@
   fetcherName,
   translatorName,
   genDirectory ? "gen/",
+  # flake inputs
+  dream2nix,
   ...
 }: let
   l = lib // builtins;
@@ -41,8 +44,12 @@
       (mkTranslateExpr pkg);
     dirPath = "${genDirectory}locks/${pkg.name}/${pkg.version}";
     command = ''
-      mkdir -p ${dirPath}
-      nix eval --impure --json --file ${expr} > ${dirPath}/dream-lock.json
+      lock="$(nix eval --impure --json --file ${expr})"
+      if [ $? -eq 0 ]; then
+        mkdir -p ${dirPath}
+        echo "$lock" | $pyexe ${dream2nix}/src/apps/cli/format-dream-lock.py \
+          > ${dirPath}/dream-lock.json
+      fi
     '';
   in
     l.toFile "translate-${pkg.name}-${pkg.version}.sh" command;
@@ -51,6 +58,9 @@ in
   pkgs: let
     invocations = l.map mkTranslateCommand pkgs;
     commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
-    script = ''${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}'';
+    script = ''
+      pyexe=${python3}
+      ${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}
+    '';
   in
     writeScript "translate.sh" script
