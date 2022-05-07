@@ -103,7 +103,7 @@
             \"type\":\"$($jqexe .sourceType -c -r $args)\"\
           }"
           $jqexe ".sources.${name}.\"${version}\" = $pkgSrc" -r $outlock \
-            | $moreutils/bin/sponge $outlock
+            | $spgexe $outlock
         fi
       fi
     '';
@@ -112,17 +112,17 @@
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
+    env = "spgexe=${moreutils}/bin/sponge jqexe=${jq}/bin/jq";
     invocations = l.map mkTranslateCommand pkgs;
     commands =
       l.map
-      (invocation: "\"$shexe -c 'jqexe=${jq}/bin/jq . ${invocation}'\"")
+      (invocation: "\"$shexe -c '${env} . ${invocation}'\"")
       invocations;
     script = let
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
     in ''
       shexe=${stdenv.shell}
-      moreutils=${moreutils}
-      $moreutils/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
+      ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
     '';
   in
     writeScript "translate.sh" script
