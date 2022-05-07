@@ -2,6 +2,7 @@
   lib,
   writeScript,
   moreutils,
+  coreutils,
   stdenv,
   jq,
   # ilib
@@ -119,11 +120,12 @@ in
     invocations = l.map mkTranslateCommand pkgs;
     commands =
       l.map
-      (invocation: "\"$shexe -c '${env} . ${invocation}'\"")
+      (invocation: "\"$timeoutexe 60s $shexe -c '${env} . ${invocation}'\"")
       invocations;
     script = let
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
     in ''
+      timeoutexe=${coreutils}/bin/timeout
       shexe=${stdenv.shell}
       ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
     '';
