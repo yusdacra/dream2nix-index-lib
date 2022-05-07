@@ -120,7 +120,7 @@ in
     invocations = l.map mkTranslateCommand pkgs;
     commands =
       l.map
-      (invocation: "\"$timeoutexe 60s $shexe -c '${env} . ${invocation}'\"")
+      (invocation: "\"$timeoutexe 600s $shexe -c '${env} . ${invocation}'\"")
       invocations;
     script = let
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
