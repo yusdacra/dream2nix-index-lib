@@ -54,9 +54,12 @@ in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
     invocations = l.map mkTranslateCommand pkgs;
-    commands = l.map (invocation: "\"${stdenv.shell} ${invocation}\"") invocations;
+    commands =
+      l.map
+      (invocation: "\"$shexe -c 'jqexe=${jq}/bin/jq . ${invocation}'\"")
+      invocations;
     script = ''
-      jqexe=${jq}/bin/jq
+      shexe=${stdenv.shell}
       ${moreutils}/bin/parallel -- ${l.concatStringsSep " " commands}
     '';
   in
