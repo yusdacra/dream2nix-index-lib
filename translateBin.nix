@@ -81,7 +81,9 @@
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
 
-    dirPath = "${genDirectory}locks/${name}/${version}";
+    dirPath =
+      l.strings.sanitizeDerivationName
+      "${genDirectory}locks/${name}/${version}";
     expr =
       l.toFile
       (l.strings.sanitizeDerivationName "translate-${name}-${version}.nix")
