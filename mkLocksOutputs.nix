@@ -11,7 +11,12 @@ in
   # tree: a source tree prepared with `dream2nix`'s `prepareSourceTree`.
   # this should be the source tree of a generated index directory.
   {tree}: let
-    locksTree = tree.directories."locks";
+    locksTree =
+      tree.directories."locks"
+      or {
+        files = {};
+        directories = {};
+      };
     lockInfos = l.flatten (
       l.map
       (
