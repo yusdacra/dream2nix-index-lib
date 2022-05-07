@@ -28,7 +28,13 @@ in
       (l.attrNames locksTree.directories)
     );
 
-    sanitizePkgName = name: l.replaceStrings ["." "+"] ["_" "_"] name;
+    sanitizePkgName = name: let
+      replace = ["." "+"];
+    in
+      l.pipe name [
+        (l.replaceStrings replace (l.map (_: "-") replace))
+        l.strings.sanitizeDerivationName
+      ];
     mkPkg = name: version:
       (d2n.makeOutputsForDreamLock {
         dreamLock =

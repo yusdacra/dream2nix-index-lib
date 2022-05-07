@@ -80,13 +80,12 @@
   '';
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
+    sanitize = l.strings.sanitizeDerivationName;
 
-    dirPath =
-      l.strings.sanitizeDerivationName
-      "${genDirectory}locks/${name}/${version}";
+    dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr =
       l.toFile
-      (l.strings.sanitizeDerivationName "translate-${name}-${version}.nix")
+      (sanitize "translate-${name}-${version}.nix")
       (mkTranslateExpr {inherit pkg dirPath;});
     command = ''
       build="$(nix build --no-link --impure --json --file ${expr})"
@@ -111,7 +110,7 @@
     '';
   in
     l.toFile
-    (l.strings.sanitizeDerivationName "translate-${name}-${version}.sh")
+    (sanitize "translate-${name}-${version}.sh")
     command;
 in
   # pkgs: [{name, version, ?hash, ...}]
