@@ -83,7 +83,8 @@
       "translate-${name}-${version}.nix"
       (mkTranslateExpr {inherit pkg dirPath;});
     command = ''
-      lock="$(nix eval --impure --raw --file ${expr})"
+      build="$(nix build --impure --json --file ${expr})"
+      lock="$(echo $build | $jqexe .outputs.out -c -r)"
       if [ $? -eq 0 ]; then
         mkdir -p ${dirPath}
         script="$($jqexe .script -c -r $lock)"
