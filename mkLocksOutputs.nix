@@ -60,7 +60,7 @@ in
           then null
           else
             l.nameValuePair
-            (ilib.sanitizeOutputName "${info.name}-${info.version}")
+            (ilib.utils.sanitizeOutputName "${info.name}-${info.version}")
             (mkPkg dreamLock)
       )
       lockInfos;

@@ -25,11 +25,9 @@
 
       fetcher = callPackage ./fetch.nix {};
       translator = callPackage ./translate.nix {};
-      sanitize = callPackage ./sanitize.nix {};
-
-      flattenIndex = callPackage ./flattenIndex.nix {};
       translateBin = callPackage ./translateBin.nix {};
       mkLocksOutputs = callPackage ./mkLocksOutputs.nix {};
+      utils = callPackage ./utils.nix {};
 
       # pkg: {name, version, ?hash, ...}
       # extra attrs aren't removed
@@ -44,14 +42,12 @@
       ilib =
         fetcher
         // translator
-        // sanitize
         // {
           inherit
-            callPackage
-            flattenIndex
             translateBin
             mkLocksOutputs
             dreamLockFor
+            utils
             ;
         };
     in

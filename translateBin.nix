@@ -82,9 +82,10 @@
   '';
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
-    sanitize = ilib.sanitizeDerivationName;
+    sanitize = ilib.utils.sanitizeDerivationName;
+    escapePath = ilib.utils.escapePath;
 
-    dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
+    dirPath = "${genDirectory}locks/${escapePath name}/${escapePath version}";
     expr =
       l.toFile
       (sanitize "translate-${name}-${version}.nix")
