@@ -96,7 +96,7 @@
         if [[ "$script" == "null" ]]; then
           $jqexe . -r $lock > $outlock
         else
-          args=$($jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock)
+          args=$($jqexe ".outputFile = \"$outlock\"" -c -r $($jqexe .args -c -r $lock))
           $script $args
           if [ $? -eq 0 ]; then
             pkgSrc="{\
