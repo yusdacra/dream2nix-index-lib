@@ -33,16 +33,12 @@ in
       name,
       version,
     }: let
-      lock = l.tryEval (
-        (
-          locksTree.getNodeFromPath
-          "${name}/${version}/dream-lock.json"
-        )
-        .jsonContent
-      );
+      lockFile =
+        locksTree.getNodeFromPath
+        "${name}/${version}/dream-lock.json";
     in
-      if lock.success
-      then lock.value
+      if l.stringLength lockFile.content > 0
+      then lockFile.jsonContent
       else {};
 
     mkPkg = dreamLock:
