@@ -29,28 +29,39 @@ in
       (l.attrNames locksTree.directories)
     );
 
-    mkPkg = name: version:
+    getDreamLock = {
+      name,
+      version,
+    }:
+      (
+        locksTree.getNodeFromPath
+        "${name}/${version}/dream-lock.json"
+      )
+      .jsonContent;
+
+    mkPkg = dreamLock:
       l.head (
         l.attrValues
         (d2n.makeOutputsForDreamLock {
-          dreamLock =
-            (
-              locksTree.getNodeFromPath
-              "${name}/${version}/dream-lock.json"
-            )
-            .jsonContent;
+          dreamLock = getDreamLock name version;
         })
         .packages
       );
 
-    pkgs =
+    pkgsUnfiltered =
       l.map
       (
-        info:
-          l.nameValuePair
-          (ilib.sanitizeOutputName "${info.name}-${info.version}")
-          (mkPkg info.name info.version)
+        info: let
+          dreamLock = getDreamLock info;
+        in
+          if l.length (l.attrNames dreamLock) == 0
+          then null
+          else
+            l.nameValuePair
+            (ilib.sanitizeOutputName "${info.name}-${info.version}")
+            (mkPkg dreamLock)
       )
       lockInfos;
+    pkgsFiltered = l.filter (pkg: pkg != null) pkgsUnfiltered;
   in
-    l.listToAttrs pkgs
+    l.listToAttrs pkgsFiltered
