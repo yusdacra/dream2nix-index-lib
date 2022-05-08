@@ -32,12 +32,18 @@ in
     getDreamLock = {
       name,
       version,
-    }:
-      (
-        locksTree.getNodeFromPath
-        "${name}/${version}/dream-lock.json"
-      )
-      .jsonContent;
+    }: let
+      lock = l.tryEval (
+        (
+          locksTree.getNodeFromPath
+          "${name}/${version}/dream-lock.json"
+        )
+        .jsonContent
+      );
+    in
+      if lock.success
+      then lock.value
+      else {};
 
     mkPkg = dreamLock:
       l.head (
