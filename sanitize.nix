@@ -11,9 +11,9 @@
   toOutStrings = toStrings ++ ["__plus__" "__dot__"];
 
   sanitizeOutputName = name:
-    lib.replaceStrings fromOutStrings toOutStrings;
+    lib.replaceStrings fromOutStrings toOutStrings name;
   desanitizeOutputName = name:
-    lib.replaceStrings toOutStrings fromOutStrings;
+    lib.replaceStrings toOutStrings fromOutStrings name;
 in {
   inherit
     sanitizeDerivationName
