@@ -53,7 +53,7 @@
       translatorName = ilib.determineTranslator {inherit tree;};
 
       lock = with ilib;
-        if translators.pure ? translatorName
+        if l.hasAttr translatorName translators.pure
         then translate (pkgWithSrc // {inherit tree;})
         else {
           script = translators.impure.${translatorAttr}.translateBin;
