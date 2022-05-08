@@ -16,10 +16,7 @@
 }: let
   l = lib // builtins;
 
-  mkTranslateExpr = {
-    pkg,
-    dirPath,
-  }: let
+  mkTranslateExpr = pkg: let
     attrs = {
       inherit
         system
@@ -71,7 +68,6 @@
                   inherit (pkg) name;
                 })
                 // {
-                  outputFile = "${dirPath}/dream-lock.json";
                   sourceHash = sourceInfo.hash;
                   sourceType = config.fetcherName;
                 }
@@ -89,7 +85,7 @@
     expr =
       l.toFile
       (sanitize "translate-${name}-${version}.nix")
-      (mkTranslateExpr {inherit pkg dirPath;});
+      (mkTranslateExpr pkg);
     command = ''
       build="$(nix build --no-link --impure --json --file ${expr})"
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
@@ -100,14 +96,16 @@
         if [[ "$script" == "null" ]]; then
           $jqexe . -r $lock > $outlock
         else
-          args="$($jqexe .args -c -r $lock)"
+          args=$($jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock)
           $script $args
-          pkgSrc="{\
-            \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
-            \"type\":\"$($jqexe .sourceType -c -r $args)\"\
-          }"
-          $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
-            | $spgexe $outlock
+          if [ $? -eq 0 ]; then
+            pkgSrc="{\
+              \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
+              \"type\":\"$($jqexe .sourceType -c -r $args)\"\
+            }"
+            $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
+              | $spgexe $outlock
+          fi
         fi
       fi
     '';
