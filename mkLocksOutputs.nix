@@ -39,7 +39,7 @@ in
     in
       if l.stringLength lockFile.content > 0
       then lockFile.jsonContent
-      else {};
+      else null;
 
     mkPkg = dreamLock:
       l.head (
@@ -56,7 +56,7 @@ in
         info: let
           dreamLock = getDreamLock info;
         in
-          if l.length (l.attrNames dreamLock) == 0
+          if dreamLock == null
           then null
           else
             l.nameValuePair
