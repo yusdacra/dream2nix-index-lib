@@ -36,16 +36,18 @@ in
         l.strings.sanitizeDerivationName
       ];
     mkPkg = name: version:
-      (d2n.makeOutputsForDreamLock {
-        dreamLock =
-          (
-            locksTree.getNodeFromPath
-            "${name}/${version}/dream-lock.json"
-          )
-          .jsonContent;
-      })
-      .packages
-      .${name};
+      l.head (
+        l.attrValues
+        (d2n.makeOutputsForDreamLock {
+          dreamLock =
+            (
+              locksTree.getNodeFromPath
+              "${name}/${version}/dream-lock.json"
+            )
+            .jsonContent;
+        })
+        .packages
+      );
 
     pkgs =
       l.map
