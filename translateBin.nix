@@ -6,6 +6,7 @@
   stdenv,
   jq,
   # ilib
+  ilib,
   system,
   subsystem,
   fetcherName,
@@ -81,7 +82,7 @@
   '';
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
-    sanitize = l.strings.sanitizeDerivationName;
+    sanitize = ilib.sanitizeDerivationName;
 
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr =

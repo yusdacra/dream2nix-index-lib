@@ -1,6 +1,7 @@
 {
   dream2nix,
   lib,
+  ilib,
   system,
   ...
 }: let
@@ -28,13 +29,6 @@ in
       (l.attrNames locksTree.directories)
     );
 
-    sanitizePkgName = name: let
-      replace = ["." "+"];
-    in
-      l.pipe name [
-        (l.replaceStrings replace (l.map (_: "-") replace))
-        l.strings.sanitizeDerivationName
-      ];
     mkPkg = name: version:
       l.head (
         l.attrValues
@@ -54,7 +48,7 @@ in
       (
         info:
           l.nameValuePair
-          (sanitizePkgName "${info.name}-${info.version}")
+          (ilib.sanitizeOutputName "${info.name}-${info.version}")
           (mkPkg info.name info.version)
       )
       lockInfos;

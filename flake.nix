@@ -21,10 +21,12 @@
       pkgs = nixpkgs.legacyPackages.${system};
 
       callPackage = f: args:
-        pkgs.callPackage f (args // attrs // {inherit dream2nix;});
+        pkgs.callPackage f (args // attrs // {inherit dream2nix ilib;});
 
       fetcher = callPackage ./fetch.nix {};
       translator = callPackage ./translate.nix {};
+      sanitize = callPackage ./sanitize.nix {};
+
       flattenIndex = callPackage ./flattenIndex.nix {};
       translateBin = callPackage ./translateBin.nix {};
       mkLocksOutputs = callPackage ./mkLocksOutputs.nix {};
@@ -38,18 +40,22 @@
         dreamLock = translator.translate pkgWithSrc;
       in
         dreamLock;
+
+      ilib =
+        fetcher
+        // translator
+        // sanitize
+        // {
+          inherit
+            callPackage
+            flattenIndex
+            translateBin
+            mkLocksOutputs
+            dreamLockFor
+            ;
+        };
     in
-      fetcher
-      // translator
-      // {
-        inherit
-          callPackage
-          flattenIndex
-          translateBin
-          mkLocksOutputs
-          dreamLockFor
-          ;
-      };
+      ilib;
   in {
     lib = {inherit mkLib;};
   };
