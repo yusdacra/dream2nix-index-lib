@@ -79,9 +79,8 @@
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
     sanitize = ilib.utils.sanitizeDerivationName;
-    escapePath = ilib.utils.escapePath;
 
-    dirPath = "${genDirectory}locks/${escapePath name}/${escapePath version}";
+    dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr =
       l.toFile
       (sanitize "translate-${name}-${version}.nix")
@@ -90,16 +89,17 @@
       build="$(nix build --no-link --impure --json --file ${expr})"
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $? -eq 0 ]; then
-        mkdir -p "${dirPath}"
         outlock="${dirPath}/dream-lock.json"
         script="$($jqexe .script -c -r $lock)"
         if [[ "$script" == "null" ]]; then
+          mkdir -p "${dirPath}"
           $jqexe . -r $lock > $outlock
         else
           args=$(mktemp)
           $jqexe ".outputFile = \"$outlock\"" -c -r "$($jqexe .args -c -r $lock)" > $args
           $script $args
           if [ $? -eq 0 ]; then
+            mkdir -p "${dirPath}"
             pkgSrc="{\
               \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
               \"type\":\"$($jqexe .sourceType -c -r $args)\"\
