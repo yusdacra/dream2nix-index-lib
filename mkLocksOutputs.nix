@@ -43,7 +43,7 @@ in
       l.head (
         l.attrValues
         (d2n.makeOutputsForDreamLock {
-          dreamLock = getDreamLock name version;
+          inherit dreamLock;
         })
         .packages
       );
