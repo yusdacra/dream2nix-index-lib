@@ -87,8 +87,9 @@
       (mkTranslateExpr pkg);
     command = ''
       build="$(nix build --no-link --impure --json --file ${expr})"
+      buildresult=$?
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
-      if [ $? -eq 0 ]; then
+      if [ $buildresult -eq 0 ]; then
         outlock="${dirPath}/dream-lock.json"
         script="$($jqexe .script -c -r $lock)"
         if [[ "$script" == "null" ]]; then
@@ -98,7 +99,8 @@
           args=$(mktemp)
           $jqexe ".outputFile = \"$outlock\"" -c -r "$($jqexe .args -c -r $lock)" > $args
           $script $args
-          if [ $? -eq 0 ]; then
+          scriptresult=$?
+          if [ $scriptresult -eq 0 ]; then
             mkdir -p "${dirPath}"
             pkgSrc="{\
               \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
