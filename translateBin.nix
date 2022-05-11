@@ -97,7 +97,7 @@
     expr = mkTranslateExpr pkg;
     command = ''
       lock=$(mktemp)
-      nix eval --no-link --json --file ${expr} > $lock
+      nix eval --json --file ${expr} > $lock
       buildresult=$?
       if [ $buildresult -eq 0 ]; then
         outlock="${dirPath}/dream-lock.json"
