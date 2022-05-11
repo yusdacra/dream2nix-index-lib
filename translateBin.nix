@@ -15,6 +15,7 @@
   ...
 }: let
   l = lib // builtins;
+  sanitize = ilib.utils.sanitizeDerivationName;
 
   mkTranslateExpr = pkg: let
     attrs = {
@@ -32,59 +33,51 @@
     systemAttr = "$" + "{config.system}";
     subsystemAttr = "$" + "{config.subsystem}";
     translatorAttr = "$" + "{translatorName}";
-  in ''
-    let
-      ilibFlake = builtins.getFlake (toString ${./.});
 
-      l = ilibFlake.inputs.nixpkgs.lib // builtins;
-      readJSON = path: l.fromJSON (l.readFile path);
+    expr = ''
+      let
+        ilibFlake = builtins.getFlake (toString ${./.});
 
-      config = readJSON ${attrsFile};
-      ilib = ilibFlake.lib.mkLib config;
-      pkgs = ilibFlake.inputs.nixpkgs.legacyPackages.${systemAttr};
-      d2n = ilibFlake.inputs.dream2nix.lib;
-      translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
+        l = ilibFlake.inputs.nixpkgs.lib // builtins;
+        readJSON = path: l.fromJSON (l.readFile path);
 
-      pkg = readJSON ${pkgFile};
-      sourceInfo = ilib.fetch pkg;
-      tree = d2n.dlib.prepareSourceTree {inherit (sourceInfo) source;};
-      pkgWithSrc =
-        (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
-      translatorName = ilib.determineTranslator {inherit tree;};
+        config = readJSON ${attrsFile};
+        ilib = ilibFlake.lib.mkLib config;
+        pkgs = ilibFlake.inputs.nixpkgs.legacyPackages.${systemAttr};
+        d2n = ilibFlake.inputs.dream2nix.lib;
+        translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
 
-      lock = with ilib;
-        if l.hasAttr translatorName translators.pure
-        then translate (pkgWithSrc // {inherit tree;})
-        else {
-          script = translators.impure.${translatorAttr}.translateBin;
-          args =
-            pkgs.writeText
-            "translator-args.json"
-            (
-              l.toJSON
-              (
-                (mkTranslatorArguments {
-                  inherit sourceInfo translatorName;
-                  inherit (pkg) name;
-                })
-                // {
-                  sourceHash = sourceInfo.hash;
-                  sourceType = config.fetcherName;
-                }
-              )
-            );
-        };
-    in pkgs.writeText "lock.json" (l.toJSON lock)
-  '';
+        pkg = readJSON ${pkgFile};
+        sourceInfo = ilib.fetch pkg;
+        tree = d2n.dlib.prepareSourceTree {inherit (sourceInfo) source;};
+        pkgWithSrc =
+          (l.getAttrs ["name" "version"] pkg) // {inherit sourceInfo;};
+        translatorName = ilib.determineTranslator {inherit tree;};
+
+        lock = with ilib;
+          if l.hasAttr translatorName translators.pure
+          then translate (pkgWithSrc // {inherit tree;})
+          else {
+            script = translators.impure.${translatorAttr}.translateBin;
+            args =
+              (mkTranslatorArguments {
+                inherit sourceInfo translatorName;
+                inherit (pkg) name;
+              })
+              // {
+                sourceHash = sourceInfo.hash;
+                sourceType = config.fetcherName;
+              };
+          };
+      in pkgs.writeText "lock.json" (l.toJSON lock)
+    '';
+  in
+    l.toFile (sanitize "translate-${name}-${version}.nix") expr;
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
-    sanitize = ilib.utils.sanitizeDerivationName;
 
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
-    expr =
-      l.toFile
-      (sanitize "translate-${name}-${version}.nix")
-      (mkTranslateExpr pkg);
+    expr = mkTranslateExpr pkg;
     command = ''
       build="$(nix build --no-link --impure --json --file ${expr})"
       buildresult=$?
@@ -97,7 +90,7 @@
           $jqexe . -r $lock > $outlock
         else
           args=$(mktemp)
-          $jqexe ".outputFile = \"$outlock\"" -c -r "$($jqexe .args -c -r $lock)" > $args
+          $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock > $args
           $script $args
           scriptresult=$?
           if [ $scriptresult -eq 0 ]; then
@@ -113,9 +106,7 @@
       fi
     '';
   in
-    l.toFile
-    (sanitize "translate-${name}-${version}.sh")
-    command;
+    l.toFile (sanitize "translate-${name}-${version}.sh") command;
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
