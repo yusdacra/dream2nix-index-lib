@@ -50,7 +50,10 @@
 
     expr = ''
       let
-        ilibFlake = (import ${./flake.nix}).outputs ${flakeInputsExpr};
+        inputs = ${flakeInputsExpr};
+        ilibFlake =
+          ((import ${./flake.nix}).outputs inputs)
+          // {inherit inputs;};
 
         l = ilibFlake.inputs.nixpkgs.lib // builtins;
         readJSON = path: l.fromJSON (l.readFile path);
