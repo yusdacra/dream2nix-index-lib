@@ -75,8 +75,8 @@
           then translate (pkgWithSrc // {inherit tree;})
           else {
             script =
-              toString (translators.impure.${translatorAttr}.translateBin
-              or (throw "did not find impure translator ${translatorAttr}"));
+              translators.impure.${translatorAttr}.translateBin.drvPath
+              or (throw "did not find impure translator ${translatorAttr}");
             args =
               (mkTranslatorArguments {
                 inherit sourceInfo translatorName;
@@ -97,30 +97,40 @@
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr = mkTranslateExpr pkg;
     command = ''
+      # create temporary lock path, attempt to translate
       lock=$(mktemp)
-      nix eval --json --file ${expr} > $lock
-      buildresult=$?
-      if [ $buildresult -eq 0 ]; then
-        outlock="${dirPath}/dream-lock.json"
-        script="$($jqexe .script -c -r $lock)"
-        if [[ "$script" == "null" ]]; then
-          mkdir -p "${dirPath}"
-          $jqexe . -r $lock > $outlock
-        else
-          args=$(mktemp)
-          $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock > $args
-          $script $args
-          scriptresult=$?
-          if [ $scriptresult -eq 0 ]; then
-            mkdir -p "${dirPath}"
-            pkgSrc="{\
-              \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
-              \"type\":\"$($jqexe .sourceType -c -r $args)\"\
-            }"
-            $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
-              | $spgexe $outlock
-          fi
-        fi
+      nix eval --json --file ${expr} > $lock || exit 1
+
+      # try to get translator script. if it exists it means
+      # the translation is impure. if not it was successful.
+      outlock="${dirPath}/dream-lock.json"
+      scriptDrv="$($jqexe .script -c -r $lock)"
+      if [[ "$scriptDrv" == "null" ]]; then
+        # make lock directory path, write the lock
+        mkdir -p "${dirPath}"
+        $jqexe . -r $lock > $outlock
+      else
+        # actually build our script
+        scriptBuild="$(mktemp)"
+        nix build --json $scriptDrv > $scriptBuild || exit 2
+
+        # get script path, create translator args file
+        script="$(echo $scriptBuild | jq '.[0].outputs.out' -c -r)"
+        args=$(mktemp)
+        $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock > $args
+
+        # run translator script
+        $script $args || exit 3
+
+        # make lock directory path, write the lock
+        # also patch up the source for our package
+        mkdir -p "${dirPath}"
+        pkgSrc="{\
+          \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
+          \"type\":\"$($jqexe .sourceType -c -r $args)\"\
+        }"
+        $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
+          | $spgexe $outlock
       fi
     '';
   in
