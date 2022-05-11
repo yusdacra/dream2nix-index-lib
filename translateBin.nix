@@ -86,7 +86,7 @@
                 sourceType = config.fetcherName;
               };
           };
-      in pkgs.writeText "lock.json" (l.toJSON lock)
+      in lock
     '';
   in
     l.toFile (sanitize "translate-${pkg.name}-${pkg.version}.nix") expr;
@@ -96,9 +96,9 @@
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr = mkTranslateExpr pkg;
     command = ''
-      build="$(nix build --no-link --json --file ${expr})"
+      lock=$(mktemp)
+      nix eval --no-link --json --file ${expr} > $lock
       buildresult=$?
-      lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $buildresult -eq 0 ]; then
         outlock="${dirPath}/dream-lock.json"
         script="$($jqexe .script -c -r $lock)"
