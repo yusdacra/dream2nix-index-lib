@@ -97,8 +97,8 @@
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr = mkTranslateExpr pkg;
     command = ''
-      lock="$(mktemp)"
       # create temporary lock path, attempt to translate
+      lock="$(mktemp)"
       nix eval --json --file "${expr}" > "$lock" || exit 1
 
       # try to get translator script. if it exists it means
@@ -115,7 +115,7 @@
         nix build --no-link --json "$scriptDrv" > "$scriptBuild" || exit 2
 
         # get script path, create translator args file
-        script="$(echo $scriptBuild | jq '.[0].outputs.out' -c -r)"
+        script="$($jqexe '.[0].outputs.out' -c -r $scriptBuild)"
         args="$(mktemp)"
         $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r "$lock" > "$args"
 
