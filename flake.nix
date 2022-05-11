@@ -8,7 +8,7 @@
     dream2nix,
     nixpkgs,
     ...
-  }: let
+  } @ inputs: let
     l = nixpkgs.lib // builtins;
 
     systems = ["x86_64-linux"];
@@ -21,7 +21,12 @@
       pkgs = nixpkgs.legacyPackages.${system};
 
       callPackage = f: args:
-        pkgs.callPackage f (args // attrs // {inherit dream2nix ilib;});
+        pkgs.callPackage f (args
+          // attrs
+          // {
+            inherit dream2nix ilib;
+            ilibInputs = inputs;
+          });
 
       fetcher = callPackage ./fetch.nix {};
       translator = callPackage ./translate.nix {};

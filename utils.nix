@@ -12,10 +12,13 @@
     lib.replaceStrings fromOutStrings toOutStrings name;
 
   escapePath = path: lib.escape ["/"] path;
+
+  mkGetFlakeExprForInput = input: ''builtins.getFlake "path:${toString input}?narHash=${input.narHash}"'';
 in {
   inherit
     sanitizeDerivationName
     sanitizeOutputName
     escapePath
+    mkGetFlakeExprForInput
     ;
 }

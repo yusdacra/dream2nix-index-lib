@@ -7,6 +7,7 @@
   jq,
   # ilib
   ilib,
+  ilibInputs,
   system,
   subsystem,
   fetcherName,
@@ -16,6 +17,19 @@
 }: let
   l = lib // builtins;
   sanitize = ilib.utils.sanitizeDerivationName;
+
+  flakeInputsExpr = let
+    inputs = l.removeAttrs ilibInputs ["self"];
+    getFlakeExprs =
+      l.mapAttrs
+      (name: value: ilib.utils.mkGetFlakeExprForInput value)
+      inputs;
+    attrs = l.mapAttrsToList (n: v: ''"${n}" = ${v};'') getFlakeExprs;
+  in ''
+    {
+      ${l.concatStringsSep "\n" attrs}
+    }
+  '';
 
   mkTranslateExpr = pkg: let
     attrs = {
@@ -36,7 +50,7 @@
 
     expr = ''
       let
-        ilibFlake = builtins.getFlake (toString ${./.});
+        ilibFlake = (import ${./flake.nix}).outputs ${flakeInputsExpr};
 
         l = ilibFlake.inputs.nixpkgs.lib // builtins;
         readJSON = path: l.fromJSON (l.readFile path);
