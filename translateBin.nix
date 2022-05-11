@@ -93,7 +93,7 @@
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr = mkTranslateExpr pkg;
     command = ''
-      build="$(nix build --no-link --impure --json --file ${expr})"
+      build="$(nix build --no-link --json --file ${expr})"
       buildresult=$?
       lock="$(echo $build | $jqexe '.[0].outputs.out' -c -r)"
       if [ $buildresult -eq 0 ]; then
