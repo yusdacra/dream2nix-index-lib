@@ -52,7 +52,7 @@
       let
         inputs = ${flakeInputsExpr};
         ilibFlake =
-          ((import ${./flake.nix}).outputs inputs)
+          ((import "${./.}/flake.nix").outputs inputs)
           // {inherit inputs;};
 
         l = ilibFlake.inputs.nixpkgs.lib // builtins;
