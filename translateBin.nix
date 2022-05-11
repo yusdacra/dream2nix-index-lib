@@ -75,8 +75,8 @@
           then translate (pkgWithSrc // {inherit tree;})
           else {
             script =
-              translators.impure.${translatorAttr}.translateBin
-              or (throw "did not find impure translator ${translatorAttr}");
+              toString (translators.impure.${translatorAttr}.translateBin
+              or (throw "did not find impure translator ${translatorAttr}"));
             args =
               (mkTranslatorArguments {
                 inherit sourceInfo translatorName;
