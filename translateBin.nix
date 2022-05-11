@@ -60,7 +60,6 @@
 
         config = readJSON ${attrsFile};
         ilib = ilibFlake.lib.mkLib config;
-        pkgs = ilibFlake.inputs.nixpkgs.legacyPackages.${systemAttr};
         d2n = ilibFlake.inputs.dream2nix.lib;
         translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
 
@@ -75,7 +74,9 @@
           if l.hasAttr translatorName translators.pure
           then translate (pkgWithSrc // {inherit tree;})
           else {
-            script = translators.impure.${translatorAttr}.translateBin;
+            script =
+              translators.impure.${translatorAttr}.translateBin
+              or (throw "did not find impure translator ${translatorAttr}");
             args =
               (mkTranslatorArguments {
                 inherit sourceInfo translatorName;
