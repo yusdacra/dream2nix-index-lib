@@ -3,7 +3,7 @@
   writeScript,
   moreutils,
   coreutils,
-  stdenv,
+  bash,
   jq,
   # ilib
   ilib,
@@ -97,9 +97,9 @@
     dirPath = "${genDirectory}locks/${sanitize name}/${sanitize version}";
     expr = mkTranslateExpr pkg;
     command = ''
+      lock="$(mktemp)"
       # create temporary lock path, attempt to translate
-      lock=$(mktemp)
-      nix eval --json --file ${expr} > $lock || exit 1
+      nix eval --json --file "${expr}" > "$lock" || exit 1
 
       # try to get translator script. if it exists it means
       # the translation is impure. if not it was successful.
@@ -108,19 +108,19 @@
       if [[ "$scriptDrv" == "null" ]]; then
         # make lock directory path, write the lock
         mkdir -p "${dirPath}"
-        $jqexe . -r $lock > $outlock
+        $jqexe . -r "$lock" > "$outlock"
       else
         # actually build our script
         scriptBuild="$(mktemp)"
-        nix build --no-link --json $scriptDrv > $scriptBuild || exit 2
+        nix build --no-link --json "$scriptDrv" > "$scriptBuild" || exit 2
 
         # get script path, create translator args file
         script="$(echo $scriptBuild | jq '.[0].outputs.out' -c -r)"
-        args=$(mktemp)
-        $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r $lock > $args
+        args="$(mktemp)"
+        $jqexe ".args.outputFile = \"$outlock\" | .args" -c -r "$lock" > "$args"
 
         # run translator script
-        $script $args || exit 3
+        "$script" "$args" || exit 3
 
         # make lock directory path, write the lock
         # also patch up the source for our package
@@ -129,8 +129,8 @@
           \"hash\":\"$($jqexe .sourceHash -c -r $args)\",\
           \"type\":\"$($jqexe .sourceType -c -r $args)\"\
         }"
-        $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r $outlock \
-          | $spgexe $outlock
+        $jqexe ".sources.\"${name}\".\"${version}\" = $pkgSrc" -r "$outlock" \
+          | $spgexe "$outlock"
       fi
     '';
   in
@@ -138,7 +138,7 @@
 in
   # pkgs: [{name, version, ?hash, ...}]
   pkgs: let
-    env = "spgexe=${moreutils}/bin/sponge jqexe=${jq}/bin/jq";
+    env = ''spgexe="${moreutils}/bin/sponge" "jqexe=${jq}/bin/jq"'';
     invocations = l.map mkTranslateCommand pkgs;
     commands =
       l.map
@@ -147,8 +147,8 @@ in
     script = let
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
     in ''
-      timeoutexe=${coreutils}/bin/timeout
-      shexe=${stdenv.shell}
+      timeoutexe="${coreutils}/bin/timeout"
+      shexe="${bash}/bin/bash"
       ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
     '';
   in
