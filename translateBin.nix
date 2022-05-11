@@ -112,7 +112,7 @@
       else
         # actually build our script
         scriptBuild="$(mktemp)"
-        nix build --json $scriptDrv > $scriptBuild || exit 2
+        nix build --no-link --json $scriptDrv > $scriptBuild || exit 2
 
         # get script path, create translator args file
         script="$(echo $scriptBuild | jq '.[0].outputs.out' -c -r)"
