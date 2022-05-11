@@ -72,7 +72,7 @@
       in pkgs.writeText "lock.json" (l.toJSON lock)
     '';
   in
-    l.toFile (sanitize "translate-${name}-${version}.nix") expr;
+    l.toFile (sanitize "translate-${pkg.name}-${pkg.version}.nix") expr;
   mkTranslateCommand = pkg: let
     inherit (pkg) name version;
 
