@@ -137,7 +137,32 @@
     l.toFile (sanitize "translate-${name}-${version}.sh") command;
 in
   # pkgs: [{name, version, ?hash, ...}]
-  pkgs: let
+  # locksTree: a source tree of a `gen/locks` directory prepared with
+  # dream2nix's `dlib.prepareSourceTree`.
+  {
+    pkgs,
+    locksTree ? null,
+  }: let
+    filteredPkgs =
+      if locksTree != null
+      then
+        l.filter
+        (
+          pkg:
+            (
+              locksTree
+              .directories
+              ."${sanitize pkg.name}"
+              .directories
+              ."${sanitize pkg.version}"
+              .files
+              ."dream-lock.json"
+              or null
+            )
+            == null
+        )
+        pkgs
+      else pkgs;
     env = ''spgexe="${moreutils}/bin/sponge" "jqexe=${jq}/bin/jq"'';
     invocations = l.map mkTranslateCommand pkgs;
     commands =
