@@ -20,11 +20,11 @@
   sanitize = utils.sanitizeDerivationName;
 
   flakeInputsExpr = let
-    inputs = l.removeAttrs inputs ["self"];
+    filteredInputs = l.removeAttrs inputs ["self"];
     getFlakeExprs =
       l.mapAttrs
       (name: value: utils.mkGetFlakeExprForInput value)
-      inputs;
+      filteredInputs;
     attrs = l.mapAttrsToList (n: v: ''"${n}" = ${v};'') getFlakeExprs;
   in ''
     {
