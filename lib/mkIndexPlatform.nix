@@ -13,18 +13,22 @@ in
     pkgs = inputs.nixpkgs.legacyPackages.${system};
 
     callPackage = f: args:
-      pkgs.callPackage f (libAttrs
+      pkgs.callPackage f
+      (
+        libAttrs
         // attrs
         // {
           inherit utils;
           pkgs-dlib = inputs.dream2nix.lib.${system};
-        });
+        }
+      );
+    callPkg = f: callPackage f {};
 
-    utils = callPackage ./utils.nix {};
-    fetch = callPackage ./fetch.nix {};
-    translate = callPackage ./translate.nix {};
-    translateScript = callPackage ./translateScript.nix {};
-    mkLocksOutputs = callPackage ./mkLocksOutputs.nix {};
+    utils = callPkg ./utils.nix;
+    fetch = callPkg ./fetch.nix;
+    translate = callPkg ./translate.nix;
+    translateScript = callPkg ./translateScript.nix;
+    mkLocksOutputs = callPkg ./mkLocksOutputs.nix;
 
     # pkg: {name, version, ?hash, ...}
     # extra attrs aren't removed
