@@ -1,16 +1,14 @@
 {
-  dream2nix,
-  system,
   lib,
+  dlib,
+  pkgs-dlib,
+  # ilib config
   subsystem,
   fetcherName,
   translatorForPath,
   ...
 }: let
-  l = lib // builtins;
-
-  d2n = dream2nix.lib.${system};
-  dlib = dream2nix.lib.dlib;
+  l = lib;
 
   determineTranslator = {tree}: let
     # determine translator
@@ -64,7 +62,7 @@
     translatorName = determineTranslator {inherit tree;};
 
     # get the translator
-    translator = d2n.translators.translators.${subsystem}.all.${translatorName};
+    translator = pkgs-dlib.translators.translators.${subsystem}.all.${translatorName};
 
     # translate the project
     dreamLock' = translator.translate (mkTranslatorArguments {
@@ -82,7 +80,7 @@
       ]
       dreamLock;
     # compress the dream lock
-    dreamLockCompressed = d2n.utils.dreamLock.compressDreamLock dreamLockPatched;
+    dreamLockCompressed = pkgs-dlib.utils.dreamLock.compressDreamLock dreamLockPatched;
   in
     dreamLockCompressed;
 

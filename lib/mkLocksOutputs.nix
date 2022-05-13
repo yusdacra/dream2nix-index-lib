@@ -1,15 +1,12 @@
 {
-  dream2nix,
   lib,
-  ilib,
-  system,
+  utils,
+  pkgs-dlib,
   ...
 }: let
-  l = lib // builtins;
-
-  d2n = dream2nix.lib.${system};
+  l = lib;
 in
-  # indexTree: a source tree prepared with `dream2nix`'s `prepareSourceTree`.
+  # indexTree: an index tree prepared with `utils.prepareIndexTree`.
   # this should be the source tree of a generated index directory.
   {indexTree}: let
     locksTree =
@@ -44,7 +41,7 @@ in
     mkPkg = dreamLock:
       l.head (
         l.attrValues
-        (d2n.makeOutputsForDreamLock {
+        (pkgs-dlib.makeOutputsForDreamLock {
           inherit dreamLock;
         })
         .packages
@@ -60,7 +57,7 @@ in
           then null
           else
             l.nameValuePair
-            (ilib.utils.sanitizeOutputName "${info.name}-${info.version}")
+            (utils.sanitizeOutputName "${info.name}-${info.version}")
             (mkPkg dreamLock)
       )
       lockInfos;

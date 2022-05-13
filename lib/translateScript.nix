@@ -1,28 +1,29 @@
 {
+  system,
+  inputs,
+  utils,
   lib,
+  # nixpkgs
   writeScript,
   moreutils,
   coreutils,
   bash,
   jq,
-  # ilib
-  ilib,
-  ilibInputs,
-  system,
+  # ilib config
   subsystem,
   fetcherName,
   translatorForPath,
   genDirectory ? "gen/",
   ...
 }: let
-  l = lib // builtins;
-  sanitize = ilib.utils.sanitizeDerivationName;
+  l = lib;
+  sanitize = utils.sanitizeDerivationName;
 
   flakeInputsExpr = let
-    inputs = l.removeAttrs ilibInputs ["self"];
+    inputs = l.removeAttrs inputs ["self"];
     getFlakeExprs =
       l.mapAttrs
-      (name: value: ilib.utils.mkGetFlakeExprForInput value)
+      (name: value: utils.mkGetFlakeExprForInput value)
       inputs;
     attrs = l.mapAttrsToList (n: v: ''"${n}" = ${v};'') getFlakeExprs;
   in ''
@@ -52,14 +53,14 @@
       let
         inputs = ${flakeInputsExpr};
         ilibFlake =
-          ((import "${./.}/flake.nix").outputs inputs)
+          ((import "${./..}/flake.nix").outputs inputs)
           // {inherit inputs;};
 
         l = ilibFlake.inputs.nixpkgs.lib // builtins;
         readJSON = path: l.fromJSON (l.readFile path);
 
         config = readJSON ${attrsFile};
-        ilib = ilibFlake.lib.mkLib config;
+        ilib = ilibFlake.lib.mkIndexPlatform config;
         d2n = ilibFlake.inputs.dream2nix.lib;
         translators = d2n.${systemAttr}.translators.translators.${subsystemAttr};
 

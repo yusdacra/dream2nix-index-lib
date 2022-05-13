@@ -1,13 +1,11 @@
 {
-  dream2nix,
   lib,
-  system,
+  pkgs-dlib,
+  # ilib config
   fetcherName,
   ...
 }: let
-  l = lib // builtins;
-
-  fetchOutputs = dream2nix.lib.${system}.fetchers.fetchers.${fetcherName}.outputs;
+  l = lib;
 
   # fetch one package.
   fetch = {
@@ -17,6 +15,8 @@
     version,
     ...
   } @ attrs: let
+    fetchOutputs = pkgs-dlib.fetchers.fetchers.${fetcherName}.outputs;
+
     outputs = fetchOutputs {
       pname = name;
       inherit version;
