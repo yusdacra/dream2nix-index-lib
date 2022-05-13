@@ -135,34 +135,8 @@
     '';
   in
     l.toFile (sanitize "translate-${name}-${version}.sh") command;
-in
-  # pkgs: [{name, version, ?hash, ...}]
-  # locksTree: a source tree of a `gen/locks` directory prepared with
-  # dream2nix's `dlib.prepareSourceTree`.
-  {
-    pkgs,
-    locksTree ? null,
-  }: let
-    filteredPkgs =
-      if locksTree != null
-      then
-        l.filter
-        (
-          pkg:
-            (
-              locksTree
-              .directories
-              ."${sanitize pkg.name}"
-              .directories
-              ."${sanitize pkg.version}"
-              .files
-              ."dream-lock.json"
-              or null
-            )
-            == null
-        )
-        pkgs
-      else pkgs;
+
+  mkTranslateScript = {pkgs}: let
     env = ''spgexe="${moreutils}/bin/sponge" "jqexe=${jq}/bin/jq"'';
     invocations = l.map mkTranslateCommand pkgs;
     commands =
@@ -171,10 +145,50 @@ in
       invocations;
     script = let
       jobs = "$" + "{" + "JOBS:+\"-j $JOBS\"" + "}";
-    in ''
-      timeoutexe="${coreutils}/bin/timeout"
-      shexe="${bash}/bin/bash"
-      ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
-    '';
+    in
+      if l.length commands == 0
+      then ''echo "no (new) packages to translate."''
+      else ''
+        timeoutexe="${coreutils}/bin/timeout"
+        shexe="${bash}/bin/bash"
+        mkdir -p ${genDirectory}locks
+        ${moreutils}/bin/parallel ${jobs} -- ${l.concatStringsSep " " commands}
+      '';
   in
-    writeScript "translate.sh" script
+    writeScript "translate.sh" script;
+
+  mkTranslateIndexScript = {genTree}: let
+    index = genTree.files."index.json".jsonContent or {};
+    _pkgs =
+      l.mapAttrsToList
+      (
+        name: versions:
+          l.mapAttrsToList
+          (version: hash: {inherit name version hash;})
+          versions
+      )
+      index;
+    pkgs = l.flatten _pkgs;
+    locksTree = genTree.directories."locks" or null;
+
+    # filter out packages that have already been translated
+    filteredPkgs =
+      l.filter
+      (
+        pkg:
+          (
+            locksTree
+            .directories
+            ."${sanitize pkg.name}"
+            .directories
+            ."${sanitize pkg.version}"
+            .files
+            ."dream-lock.json"
+            or null
+          )
+          == null
+      )
+      pkgs;
+  in
+    mkTranslateScript {pkgs = filteredPkgs;};
+in {inherit mkTranslateScript mkTranslateIndexScript;}

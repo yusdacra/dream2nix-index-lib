@@ -47,9 +47,9 @@
       ilib =
         fetcher
         // translator
+        // translateBin
         // {
           inherit
-            translateBin
             mkLocksOutputs
             dreamLockFor
             utils
