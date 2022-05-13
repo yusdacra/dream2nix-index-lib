@@ -19,8 +19,8 @@
 
   mkGetFlakeExprForInput = input: ''builtins.getFlake "path:${toString input}?narHash=${input.narHash}"'';
 
-  prepareIndexTree = source:
-    dream2nix.lib.dlib.prepareSourceTree {inherit source;};
+  prepareIndexTree = {path}:
+    dream2nix.lib.dlib.prepareSourceTree {source = path;};
 in {
   inherit
     sanitizeDerivationName
