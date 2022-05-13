@@ -1,4 +1,4 @@
-name: "Nix"
+name: "Regenerate index"
 on:
   workflow_dispatch:
   schedule:
