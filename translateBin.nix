@@ -157,8 +157,10 @@
   in
     writeScript "translate.sh" script;
 
-  mkTranslateIndexScript = {genTree}: let
-    index = genTree.files."index.json".jsonContent or {};
+  mkTranslateIndexScript = {indexTree}: let
+    index = indexTree.files."index.json".jsonContent or {};
+    locksTree = indexTree.directories."locks" or null;
+
     _pkgs =
       l.mapAttrsToList
       (
@@ -169,7 +171,6 @@
       )
       index;
     pkgs = l.flatten _pkgs;
-    locksTree = genTree.directories."locks" or null;
 
     # filter out packages that have already been translated
     filteredPkgs =

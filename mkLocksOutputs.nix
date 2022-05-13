@@ -9,11 +9,11 @@
 
   d2n = dream2nix.lib.${system};
 in
-  # tree: a source tree prepared with `dream2nix`'s `prepareSourceTree`.
+  # indexTree: a source tree prepared with `dream2nix`'s `prepareSourceTree`.
   # this should be the source tree of a generated index directory.
-  {tree}: let
+  {indexTree}: let
     locksTree =
-      tree.directories."locks"
+      indexTree.directories."locks"
       or {
         files = {};
         directories = {};
