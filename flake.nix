@@ -6,5 +6,9 @@
 
   outputs = inputs: {
     lib = import ./lib {inherit inputs;};
+    templates.default = {
+      description = "template for indexes.";
+      path = ./template;
+    };
   };
 }
