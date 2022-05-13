@@ -166,7 +166,11 @@
       (
         name: versions:
           l.mapAttrsToList
-          (version: hash: {inherit name version hash;})
+          (
+            version: hash:
+              {inherit name version;}
+              // (l.optionalAttrs (hash != null) {inherit hash;})
+          )
           versions
       )
       index;
