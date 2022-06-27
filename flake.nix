@@ -1,17 +1,11 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    dream2nix = {
-      url = "github:nix-community/dream2nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    nixpkgs-lib.url = "github:nix-community/nixpkgs.lib";
+    dream2nix.url = "github:nix-community/dream2nix";
+    dream2nix.flake = false;
   };
 
   outputs = inputs: {
     lib = import ./lib {inherit inputs;};
-    templates.default = {
-      description = "template for indexes.";
-      path = ./template;
-    };
   };
 }

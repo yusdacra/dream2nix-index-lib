@@ -19,8 +19,6 @@
 
   escapePath = path: l.escape ["/"] path;
 
-  mkGetFlakeExprForInput = input: ''builtins.getFlake "path:${toString input}?narHash=${input.narHash}"'';
-
   prepareIndexTree = {path}:
     dlib.prepareSourceTree {source = path;};
 in {
@@ -28,7 +26,6 @@ in {
     sanitizeDerivationName
     sanitizeOutputName
     escapePath
-    mkGetFlakeExprForInput
     prepareIndexTree
     ;
 }

@@ -1,14 +1,16 @@
 {
   lib,
   utils,
-  pkgs-dlib,
   ...
 }: let
   l = lib;
 in
   # indexTree: an index tree prepared with `utils.prepareIndexTree`.
   # this should be the source tree of a generated index directory.
-  {indexTree}: let
+  {
+    indexTree,
+    makeOutputsForDreamLock,
+  }: let
     locksTree =
       indexTree.directories."locks"
       or {
@@ -41,7 +43,7 @@ in
     mkPkg = dreamLock:
       l.head (
         l.attrValues
-        (pkgs-dlib.makeOutputsForDreamLock {
+        (makeOutputsForDreamLock {
           inherit dreamLock;
         })
         .packages
