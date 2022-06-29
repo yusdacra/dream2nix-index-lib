@@ -55,12 +55,14 @@
     mkIndexOutputs = name:
       if l.pathExists "${source}/${name}/locks"
       then
-        d2n.utils.generatePackagesFromLocksTree {
+        l.removeAttrs
+        (d2n.utils.generatePackagesFromLocksTree {
           source = l.path {
             name = "${name}";
             path = "${source}/${name}/locks";
           };
-        }
+        })
+        ["default"]
       else {};
 
     allPackages =
