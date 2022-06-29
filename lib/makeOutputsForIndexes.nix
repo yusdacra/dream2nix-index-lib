@@ -70,7 +70,7 @@
       (l.map mkIndexOutputs indexNames);
 
     outputs = {
-      hydraJobs = l.mapAttrs (name: pkg: {${system}.${name} = pkg;}) allPackages;
+      hydraJobs = l.mapAttrs (name: pkg: {${system} = pkg;}) allPackages;
       packages.${system} = allPackages;
       apps.${system} = translateApps;
     };
