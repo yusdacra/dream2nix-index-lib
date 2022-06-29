@@ -13,8 +13,8 @@
   };
 
   mkOutputs = system: indexNames: let
-    pkgs = nixpkgs.legacyPackages.${system};
-    d2n = dream2nix.lib.init {
+    pkgs = inputs.nixpkgs.legacyPackages.${system};
+    d2n = inputs.dream2nix.lib.init {
       inherit pkgs;
       config.projectRoot = ./.;
     };
