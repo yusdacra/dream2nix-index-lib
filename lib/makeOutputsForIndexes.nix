@@ -3,6 +3,7 @@
   lib,
   ...
 }: {
+  source,
   indexesForSystems,
   extendOutputs ? args: prevOutputs: {},
 }: let
@@ -16,7 +17,7 @@
     pkgs = inputs.dream2nix.inputs.nixpkgs.legacyPackages.${system};
     d2n = inputs.dream2nix.lib.init {
       inherit pkgs;
-      config.projectRoot = ./.;
+      config.projectRoot = source;
     };
 
     mkIndexApp = {
@@ -52,12 +53,15 @@
     );
 
     mkIndexOutputs = name:
-      d2n.utils.generatePackagesFromLocksTree {
-        source = l.path {
-          name = "${name}";
-          path = "${./.}/${name}/locks";
-        };
-      };
+      if l.pathExists "${source}/${name}/locks"
+      then
+        d2n.utils.generatePackagesFromLocksTree {
+          source = l.path {
+            name = "${name}";
+            path = "${source}/${name}/locks";
+          };
+        }
+      else {};
 
     allPackages =
       l.foldl'
