@@ -7,13 +7,13 @@
       then _f
       else throw "value must be a function or a path pointing to a Nix file containing a function";
 
-    argsToAdd = {
+    argsToAdd = rec {
       inherit inputs;
-      inherit (inputs.dream2nix.lib) dlib;
-      lib = inputs.nixpkgs.lib // builtins;
+      dlib = inputs.dream2nix.lib.dlib;
+      lib = inputs.dream2nix.inputs.nixpkgs.lib // builtins;
     };
   in
     f (argsToAdd // args);
 in {
-  mkIndexPlatform = callLib ./mkIndexPlatform.nix {};
+  makeOutputsForIndexes = callLib ./makeOutputsForIndexes.nix {};
 }
