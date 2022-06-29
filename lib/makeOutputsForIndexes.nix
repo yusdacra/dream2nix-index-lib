@@ -35,7 +35,7 @@
       mkApp script;
     mkTranslateApp = name:
       mkApp (
-        pkgs.writers.writeBash "translate" ''
+        pkgs.writers.writeBash "translate-${name}" ''
           set -e
           ${d2n.apps.translate-index}/bin/translate-index \
             ${name}/index.json ${name}/locks
@@ -51,6 +51,28 @@
       )
       indexNames
     );
+    translateAllApp = let
+      allTranslators =
+        l.concatStringsSep
+        "\n"
+        (
+          l.mapAttrsToList
+          (
+            name: translator: ''
+              echo "::translating with ${name}::"
+              ${translator}
+              echo "::translated with ${name}::"
+            ''
+          )
+          translateApps
+        );
+    in
+      mkApp (
+        pkgs.writers.writeBash "translate-all" ''
+          set -e
+          ${allTranslators}
+        ''
+      );
 
     mkIndexOutputs = name:
       if l.pathExists "${source}/${name}/locks"
@@ -74,7 +96,11 @@
     outputs = {
       hydraJobs = l.mapAttrs (name: pkg: {${system} = pkg;}) allPackages;
       packages.${system} = allPackages;
-      apps.${system} = translateApps;
+      apps.${system} =
+        translateApps
+        // {
+          translate = translateAllApp;
+        };
     };
   in
     outputs
