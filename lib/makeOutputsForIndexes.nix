@@ -89,7 +89,7 @@ in
     }:
       mkOutputs system indexNames)
     (
-      l.mapListToAttrs
+      l.mapAttrsToList
       (n: v: {
         system = n;
         indexNames = v;
