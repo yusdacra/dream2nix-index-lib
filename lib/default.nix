@@ -10,10 +10,10 @@
     argsToAdd = rec {
       dlib = import "${inputs.dream2nix}/src/lib" {inherit lib;};
       lib = inputs.nixpkgs-lib.lib // builtins;
+      inherit inputs;
     };
   in
     f (argsToAdd // args);
-in rec {
-  utils = callLib ./utils.nix {};
-  mkLocksOutputs = callLib ./mkLocksOutputs.nix {inherit utils;};
+in {
+  makeOutputsForIndexes = callLib ./makeOutputsForIndexes.nix {};
 }
