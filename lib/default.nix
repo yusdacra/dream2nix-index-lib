@@ -8,9 +8,9 @@
       else throw "value must be a function or a path pointing to a Nix file containing a function";
 
     argsToAdd = rec {
-      dlib = import "${inputs.dream2nix}/src/lib" {inherit lib;};
-      lib = inputs.nixpkgs-lib.lib // builtins;
       inherit inputs;
+      dlib = inputs.dream2nix.lib.dlib;
+      lib = inputs.dream2nix.inputs.nixpkgs.lib // builtins;
     };
   in
     f (argsToAdd // args);
